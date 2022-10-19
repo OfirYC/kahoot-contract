@@ -1,0 +1,35 @@
+{
+  "language": "Solidity",
+  "sources": {
+    "contracts/kahoot.sol": {
+      "content": "// SPDX-License-Identifier: MIT\npragma solidity ^0.8.8;\n\ncontract kahoot {\n  address payable public owner;\n  string private nameOfGame;\n\n  constructor(string memory _gameName) {\n    owner = payable(msg.sender);\n    nameOfGame = _gameName;\n  }\n\n  modifier isOwner() {\n    require(msg.sender == owner);\n    _;\n  }\n\n  function deposit() public payable {\n    owner.transfer(msg.value);\n  }\n\n  struct Questions {\n    string[] Answers;\n    uint256 correctAnswer;\n  }\n  struct Students {\n    string Name;\n    address StudentAddress;\n  }\n  address[] studentsArray;\n\n  mapping(uint256 => mapping(string => address)) public students;\n  mapping(uint256 => address) public studentsAddresses;\n  mapping(address => uint256) public studentsIds;\n  mapping(uint256 => mapping(string => Questions)) public questions;\n  mapping(uint256 => string) public idQuestions;\n  mapping(uint256 => string[]) public questionAnswers;\n  mapping(uint256 => uint256) public correctAnswerMapping;\n  mapping(address => uint256[]) public didStudentRespond;\n\n  // Add a student to be allowed to play the game\n  function addStudent(\n    uint256 _id,\n    address _studentAddress,\n    string memory _studentName\n  ) public isOwner {\n    students[_id][_studentName] = _studentAddress;\n    studentsAddresses[_id] = _studentAddress;\n    studentsIds[_studentAddress] = _id;\n    studentsArray.push(_studentAddress);\n  }\n\n  // Adds question/answers to mappings\n  function addQuestion(\n    uint256 _qid,\n    string memory _question,\n    string memory _answerOne,\n    string memory _answerTwo,\n    string memory _answerThree,\n    string memory _answerFour,\n    uint256 _correctAnswer\n  ) public isOwner {\n    Questions storage _q = questions[_qid][_question];\n    _q.Answers = [_answerOne, _answerTwo, _answerThree, _answerFour];\n    _q.correctAnswer = _correctAnswer;\n    idQuestions[_qid] = _question;\n    questionAnswers[_qid] = [_answerOne, _answerTwo, _answerThree, _answerFour];\n    correctAnswerMapping[_qid] = _correctAnswer;\n  }\n\n  // Fetches Question String By It's ID in the 2nd Mapping\n  function fetchQuestion(uint256 _qid) public view returns (string memory) {\n    string memory veribeel;\n    veribeel = idQuestions[_qid];\n    return veribeel;\n  }\n\n  // Fetches All possible Answers of a certain question by ID\n  function fetchAnswers(uint256 _id) public view returns (string[] memory) {\n    string memory veribeel;\n    string[] memory allAnswers;\n    veribeel = idQuestions[_id];\n    allAnswers = questionAnswers[_id];\n    return allAnswers;\n  }\n\n  // Returns True/False based on string input if matches QuestionID's correctAnswer\n  function answerQuestion(uint256 _id, uint256 _studentAnswer)\n    public\n    returns (bool)\n  {\n    uint256 studentAnswer = correctAnswerMapping[_id];\n    didStudentRespond[msg.sender] = [_id];\n    if (_studentAnswer == studentAnswer) {\n      return true;\n    } else {\n      return false;\n    }\n  }\n\n  function isThisAddressStudent(address _studentAddress)\n    public\n    view\n    returns (bool)\n  {\n    for (uint256 i = 0; i < studentsArray.length; i++) {\n      if (studentsArray[i] == _studentAddress) {\n        return true;\n      }\n    }\n    return false;\n  }\n\n  function questionsAnsweredByStudent(address _address)\n    public\n    view\n    returns (uint256[] memory)\n  {\n    uint256[] memory variable = didStudentRespond[_address];\n    return variable;\n  }\n\n}\n"
+    }
+  },
+  "settings": {
+    "optimizer": {
+      "enabled": false,
+      "runs": 200
+    },
+    "outputSelection": {
+      "*": {
+        "*": [
+          "abi",
+          "evm.bytecode",
+          "evm.deployedBytecode",
+          "evm.methodIdentifiers",
+          "metadata",
+          "devdoc",
+          "userdoc",
+          "storageLayout",
+          "evm.gasEstimates"
+        ],
+        "": [
+          "ast"
+        ]
+      }
+    },
+    "metadata": {
+      "useLiteralContent": true
+    }
+  }
+}
