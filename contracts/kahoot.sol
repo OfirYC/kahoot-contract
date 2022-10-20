@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.8;
 
+import "@chainlink/contracts/src/v0.8/AutomationCompatible.sol";
+
 contract kahoot {
     // Variables
     address payable public owner;
     string private nameOfGame;
+    uint256 public ownerCurrentQuestion;
+    uint256 public keeperCurrentQuestion;
     uint256 public currentQuestion;
 
     GameStatus isGameOpen;
@@ -81,14 +85,13 @@ contract kahoot {
     }
 
     // Add a student to be allowed to play the game
-    function addStudent(address _studentAddress, string memory _studentName)
-        public
-    {
+    function addStudent(string memory _studentName) public {
         uint256 id = studentsArray.length + 1;
-        students[id][_studentName] = _studentAddress;
-        studentsAddresses[id] = _studentAddress;
-        studentsIds[_studentAddress] = id;
-        studentsArray.push(_studentAddress);
+        address m_studentAddress = msg.sender;
+        students[id][_studentName] = m_studentAddress;
+        studentsAddresses[id] = m_studentAddress;
+        studentsIds[m_studentAddress] = id;
+        studentsArray.push(m_studentAddress);
     }
 
     // Adds a question/answers to the game
@@ -112,6 +115,7 @@ contract kahoot {
             _answerFour
         ];
         correctAnswerMapping[qid] = _correctAnswer;
+        questionsArray.push(_question);
     }
 
     // Fetches Question String By It's ID in the 2nd Mapping
@@ -185,5 +189,39 @@ contract kahoot {
     function getCurrentQuestion() public view returns (string memory) {
         uint256 currentId = getCurrentQuestionId();
         return idQuestions[currentId];
+    }
+
+    function getQuestions() public view returns (string[] memory) {
+        return questionsArray;
+    }
+
+    /*
+     * When updateCurrentQuestion() is called,
+     */
+
+    function startGame() private {
+        currentQuestion = 0;
+    }
+
+    function updateOwnerCurrentQuestion() public {
+        ownerCurrentQuestion++;
+        currentQuestionPingPong();
+    }
+
+    function keeperUpdateCurrentQuestion() public {
+        keeperCurrentQuestion++;
+        currentQuestionPingPong();
+    }
+
+    function currentQuestionPingPong() internal {
+        if (keeperCurrentQuestion == ownerCurrentQuestion) {
+            currentQuestion = currentQuestion;
+        } else if (keeperCurrentQuestion > ownerCurrentQuestion) {
+            currentQuestion = keeperCurrentQuestion;
+            ownerCurrentQuestion = keeperCurrentQuestion;
+        } else {
+            currentQuestion = ownerCurrentQuestion;
+            keeperCurrentQuestion = ownerCurrentQuestion;
+        }
     }
 }
